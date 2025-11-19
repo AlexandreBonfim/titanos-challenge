@@ -8,6 +8,12 @@ Rails.application.routes.draw do
   namespace :api do
     namespace :v1 do
       resources :contents, only: [ :index ]
+      resources :movies, only: [ :show ]
+      resources :tv_shows, only: [ :show ]
+      resources :seasons, only: [ :show ]
+      resources :episodes, only: [ :show ]
+      resources :channels, only: [ :show ]
+      resources :channel_programs, only: [ :show ]
     end
   end
 end

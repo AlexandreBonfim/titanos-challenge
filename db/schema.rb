@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.0].define(version: 2025_11_18_130607) do
+ActiveRecord::Schema[8.0].define(version: 2025_11_19_094557) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -95,9 +95,20 @@ ActiveRecord::Schema[8.0].define(version: 2025_11_18_130607) do
     t.datetime "updated_at", null: false
   end
 
+  create_table "watch_events", force: :cascade do |t|
+    t.integer "user_id", null: false
+    t.bigint "channel_program_id", null: false
+    t.integer "watched_seconds", default: 0, null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["channel_program_id"], name: "index_watch_events_on_channel_program_id"
+    t.index ["user_id", "channel_program_id"], name: "index_watch_events_on_user_id_and_channel_program_id", unique: true
+  end
+
   add_foreign_key "availabilities", "apps"
   add_foreign_key "channel_programs", "channels"
   add_foreign_key "episodes", "seasons"
   add_foreign_key "episodes", "tv_shows"
   add_foreign_key "seasons", "tv_shows"
+  add_foreign_key "watch_events", "channel_programs"
 end
