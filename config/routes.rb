@@ -8,6 +8,12 @@ Rails.application.routes.draw do
   namespace :api do
     namespace :v1 do
       resources :contents, only: [ :index ]
+
+      resources :users, only: [] do
+        get "favorite_channel_programs", to: "favorite_channel_programs#index"
+        resources :favorite_apps, only: [ :index, :create ]
+      end
+
       resources :movies, only: [ :show ]
       resources :tv_shows, only: [ :show ]
       resources :seasons, only: [ :show ]

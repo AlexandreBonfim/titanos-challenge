@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.0].define(version: 2025_11_19_094557) do
+ActiveRecord::Schema[8.0].define(version: 2025_11_19_115851) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -68,6 +68,17 @@ ActiveRecord::Schema[8.0].define(version: 2025_11_19_094557) do
     t.index ["tv_show_id"], name: "index_episodes_on_tv_show_id"
   end
 
+  create_table "favorite_apps", force: :cascade do |t|
+    t.integer "user_id", null: false
+    t.bigint "app_id", null: false
+    t.integer "position", null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["app_id"], name: "index_favorite_apps_on_app_id"
+    t.index ["user_id", "app_id"], name: "index_favorite_apps_on_user_id_and_app_id", unique: true
+    t.index ["user_id", "position"], name: "index_favorite_apps_on_user_id_and_position"
+  end
+
   create_table "movies", force: :cascade do |t|
     t.string "original_title"
     t.integer "year"
@@ -109,6 +120,7 @@ ActiveRecord::Schema[8.0].define(version: 2025_11_19_094557) do
   add_foreign_key "channel_programs", "channels"
   add_foreign_key "episodes", "seasons"
   add_foreign_key "episodes", "tv_shows"
+  add_foreign_key "favorite_apps", "apps"
   add_foreign_key "seasons", "tv_shows"
   add_foreign_key "watch_events", "channel_programs"
 end
