@@ -20,6 +20,8 @@ Rails.application.routes.draw do
       resources :episodes, only: [ :show ]
       resources :channels, only: [ :show ]
       resources :channel_programs, only: [ :show ]
+
+      get "search", to: "search#index"
     end
   end
 end
