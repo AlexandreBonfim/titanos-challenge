@@ -5,4 +5,10 @@ class Episode < ApplicationRecord
 
   validates :original_title, presence: true
   validates :number, presence: true
+
+  scope :available_in, ->(market) {
+    joins(season: :availabilities)
+      .merge(Availability.for_market(market))
+      .distinct
+  }
 end

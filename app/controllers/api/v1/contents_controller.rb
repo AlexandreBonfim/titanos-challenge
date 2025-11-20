@@ -47,16 +47,7 @@ module Api
       end
 
       def records_for_type(klass, country)
-        if klass == Episode
-          Episode.joins(season: :availabilities)
-                 .where(availabilities: { market: country })
-                 .distinct
-        else
-          ids = Availability.where(market: country, available_type: klass.name)
-                            .distinct
-                            .pluck(:available_id)
-          klass.where(id: ids)
-        end
+        klass.available_in(country)
       end
     end
   end
