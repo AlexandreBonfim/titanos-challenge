@@ -1,4 +1,6 @@
 class ChannelProgram < ApplicationRecord
+  include Searchable
+
   belongs_to :channel
   has_many :availabilities, as: :available, dependent: :destroy
 

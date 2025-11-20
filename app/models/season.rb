@@ -1,4 +1,6 @@
 class Season < ApplicationRecord
+  include Searchable
+
   belongs_to :tv_show
   has_many :episodes, dependent: :destroy
   has_many :availabilities, as: :available, dependent: :destroy

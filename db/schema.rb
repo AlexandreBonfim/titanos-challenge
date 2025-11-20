@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.0].define(version: 2025_11_19_115851) do
+ActiveRecord::Schema[8.0].define(version: 2025_11_20_164242) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -53,6 +53,16 @@ ActiveRecord::Schema[8.0].define(version: 2025_11_19_115851) do
     t.integer "duration_in_seconds"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+  end
+
+  create_table "content_items", force: :cascade do |t|
+    t.string "searchable_type", null: false
+    t.bigint "searchable_id", null: false
+    t.string "original_title"
+    t.integer "year"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["searchable_type", "searchable_id"], name: "index_content_items_on_searchable"
   end
 
   create_table "episodes", force: :cascade do |t|

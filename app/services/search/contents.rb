@@ -1,5 +1,14 @@
 module Search
   class Contents
+    SERIALIZER_MAP = {
+      "Movie" => MovieSerializer,
+      "TvShow" => TvShowSerializer,
+      "Season" => SeasonSerializer,
+      "Episode" => EpisodeSerializer,
+      "Channel" => ChannelSerializer,
+      "ChannelProgram" => ChannelProgramSerializer
+    }.freeze
+
     def initialize(query)
       @query = query.to_s.strip
     end
@@ -10,16 +19,10 @@ module Search
       pattern = like_pattern(@query)
       year    = parse_year(@query)
 
-      results  = []
-      results += search(Movie, MovieSerializer, :original_title, pattern, year)
-      results += search(TvShow, TvShowSerializer, :original_title, pattern, year)
-      results += search(Season, SeasonSerializer, :original_title, pattern, year)
-      results += search(Episode, EpisodeSerializer, :original_title, pattern, year)
-      results += search(Channel, ChannelSerializer, :original_title, pattern, year)
-      results += search(ChannelProgram, ChannelProgramSerializer, :original_title, pattern, year)
+      results  = search_content_items(pattern, year)
       results += search_apps(pattern)
 
-      results
+      results.shuffle
     end
 
     private
@@ -30,11 +33,23 @@ module Search
       Integer(query, exception: false)
     end
 
-    def search(model, serializer, column, pattern, year)
-      scope = model.where("LOWER(#{column}) LIKE ?", pattern)
-      scope = scope.or(model.where(year: year)) if year
+    def serializer_for(searchable_type)
+      SERIALIZER_MAP[searchable_type]
+    end
 
-      ApplicationSerializer.serialize_collection(scope.limit(50), serializer)
+    def search_content_items(pattern, year)
+      scope = ContentItem.includes(:searchable).where("LOWER(original_title) LIKE ?", pattern)
+      scope = scope.or(ContentItem.where(year: year)) if year
+
+      scope.limit(50).map do |content_item|
+        serializer_class = serializer_for(content_item.searchable_type)
+        if serializer_class
+          serializer_class.serialize(content_item.searchable)
+        else
+          Rails.logger.warn("No serializer found for searchable_type: #{content_item.searchable_type}")
+          nil
+        end
+      end.compact
     end
 
     def search_apps(pattern)
