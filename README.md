@@ -38,10 +38,16 @@ Testing: RSpec, FactoryBot
 app/
 ├── controllers/api/v1/     # versioned API
 ├── models/                 # domain models
-├── services/streams/       # importer logic
-└── serializers (future)
+│   ├── concerns/           # shared model concerns (e.g., Searchable)
+│   └── content_item.rb     # unified search index model
+├── services/               # business logic services
+│   ├── favorites/          # favorites logic
+│   ├── search/             # search logic
+│   └── streams/            # importer logic
+└── serializers/            # API serializers
 spec/
 ├── models/                 # model specs
+│   └── content_item_spec.rb # spec for content_item
 ├── requests/api/v1/        # endpoint specs
 └── fixtures/               # sample JSON
 db/
