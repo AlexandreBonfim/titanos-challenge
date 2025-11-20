@@ -1,0 +1,454 @@
+openapi: 3.0.3
+info:
+  title: TitanOS Content API
+  version: 1.0.0
+  description: |
+    HTTP API used by TitanOS client applications to surface movies, shows,
+    channels and personalized favorites. All endpoints are JSON only and are
+    namespaced under `/api/v1`.
+servers:
+  - url: https://{host}
+    description: Production
+    variables:
+      host:
+        default: api.titanos.local
+  - url: http://localhost:3000
+    description: Local development
+tags:
+  - name: Catalog
+    description: Content discovery endpoints
+  - name: Users
+    description: User-specific resources such as favorites and watch history
+  - name: Search
+    description: Full text search across catalog entities
+paths:
+  /api/v1/contents:
+    get:
+      tags: [Catalog]
+      summary: List available content for a market
+      description: |
+        Returns a flattened list of all catalog entries available in the
+        requested market. Optionally filter by a specific type (movie, tv_show,
+        season, episode, channel, channel_program).
+      parameters:
+        - in: query
+          name: country
+          required: true
+          description: Two-letter market code (ISO 3166-1 alpha-2)
+          schema:
+            type: string
+            minLength: 2
+            maxLength: 2
+        - in: query
+          name: type
+          required: false
+          schema:
+            $ref: '#/components/schemas/ContentType'
+          description: Restrict results to a specific content type
+      responses:
+        "200":
+          description: Content records available in the market
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/ContentSummary'
+        "400":
+          description: Unsupported type
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+  /api/v1/movies/{id}:
+    get:
+      tags: [Catalog]
+      summary: Fetch a movie by id
+      parameters:
+        - $ref: '#/components/parameters/ResourceId'
+      responses:
+        "200":
+          description: Movie
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Movie'
+        "404":
+          $ref: '#/components/responses/NotFound'
+  /api/v1/tv_shows/{id}:
+    get:
+      tags: [Catalog]
+      summary: Fetch a TV show by id
+      parameters:
+        - $ref: '#/components/parameters/ResourceId'
+      responses:
+        "200":
+          description: TV show
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TvShow'
+        "404":
+          $ref: '#/components/responses/NotFound'
+  /api/v1/seasons/{id}:
+    get:
+      tags: [Catalog]
+      summary: Fetch a season by id
+      parameters:
+        - $ref: '#/components/parameters/ResourceId'
+      responses:
+        "200":
+          description: Season
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Season'
+        "404":
+          $ref: '#/components/responses/NotFound'
+  /api/v1/episodes/{id}:
+    get:
+      tags: [Catalog]
+      summary: Fetch an episode by id
+      parameters:
+        - $ref: '#/components/parameters/ResourceId'
+      responses:
+        "200":
+          description: Episode
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Episode'
+        "404":
+          $ref: '#/components/responses/NotFound'
+  /api/v1/channels/{id}:
+    get:
+      tags: [Catalog]
+      summary: Fetch a channel by id
+      parameters:
+        - $ref: '#/components/parameters/ResourceId'
+      responses:
+        "200":
+          description: Channel
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Channel'
+        "404":
+          $ref: '#/components/responses/NotFound'
+  /api/v1/channel_programs/{id}:
+    get:
+      tags: [Catalog]
+      summary: Fetch a linear program with optional watch progress
+      parameters:
+        - $ref: '#/components/parameters/ResourceId'
+        - in: query
+          name: user_id
+          required: false
+          schema:
+            type: integer
+            minimum: 1
+          description: Include watched_seconds for this user if present
+      responses:
+        "200":
+          description: Channel program
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ChannelProgramDetail'
+        "404":
+          $ref: '#/components/responses/NotFound'
+  /api/v1/search:
+    get:
+      tags: [Search]
+      summary: Search across the catalog
+      parameters:
+        - in: query
+          name: query
+          description: Free-form text or year value
+          required: true
+          schema:
+            type: string
+            minLength: 1
+      responses:
+        "200":
+          description: Aggregated search results
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/SearchResult'
+  /api/v1/users/{user_id}/favorite_channel_programs:
+    get:
+      tags: [Users]
+      summary: List a user's most watched channel programs
+      parameters:
+        - $ref: '#/components/parameters/UserId'
+      responses:
+        "200":
+          description: Watch events ordered by descending watch time
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/FavoriteChannelProgram'
+  /api/v1/users/{user_id}/favorite_apps:
+    get:
+      tags: [Users]
+      summary: List favorite streaming apps for a user
+      parameters:
+        - $ref: '#/components/parameters/UserId'
+      responses:
+        "200":
+          description: Ordered favorites
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/FavoriteApp'
+    post:
+      tags: [Users]
+      summary: Create or update a favorite app slot
+      parameters:
+        - $ref: '#/components/parameters/UserId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - app_id
+                - position
+              properties:
+                app_id:
+                  type: integer
+                  minimum: 1
+                position:
+                  type: integer
+                  minimum: 0
+      responses:
+        "200":
+          description: Favorite slot saved
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FavoriteApp'
+        "422":
+          description: Validation error (duplicate position, invalid app, etc.)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+components:
+  parameters:
+    ResourceId:
+      name: id
+      in: path
+      required: true
+      schema:
+        type: integer
+        minimum: 1
+      description: Numeric record identifier
+    UserId:
+      name: user_id
+      in: path
+      required: true
+      schema:
+        type: integer
+        minimum: 1
+      description: TitanOS user identifier
+  responses:
+    NotFound:
+      description: Resource not found
+  schemas:
+    ContentType:
+      type: string
+      enum: [movie, tv_show, season, episode, channel, channel_program]
+    ContentSummary:
+      type: object
+      properties:
+        id:
+          type: integer
+        type:
+          $ref: '#/components/schemas/ContentType'
+        original_title:
+          type: string
+        year:
+          type: integer
+          nullable: true
+        duration_in_seconds:
+          type: integer
+          nullable: true
+      required: [id, type, original_title]
+    Movie:
+      allOf:
+        - $ref: '#/components/schemas/ContentSummary'
+        - type: object
+          properties:
+            type:
+              type: string
+              enum: [movie]
+    TvShow:
+      allOf:
+        - $ref: '#/components/schemas/ContentSummary'
+        - type: object
+          properties:
+            type:
+              type: string
+              enum: [tv_show]
+            seasons_count:
+              type: integer
+              minimum: 0
+            episodes_count:
+              type: integer
+              minimum: 0
+    Season:
+      type: object
+      properties:
+        id:
+          type: integer
+        type:
+          type: string
+          enum: [season]
+        original_title:
+          type: string
+        number:
+          type: integer
+        year:
+          type: integer
+          nullable: true
+        tv_show_id:
+          type: integer
+      required: [id, type, original_title, number, tv_show_id]
+    Episode:
+      type: object
+      properties:
+        id:
+          type: integer
+        type:
+          type: string
+          enum: [episode]
+        original_title:
+          type: string
+        number:
+          type: integer
+        year:
+          type: integer
+          nullable: true
+        tv_show_id:
+          type: integer
+        season_id:
+          type: integer
+      required: [id, type, original_title, number, tv_show_id, season_id]
+    Channel:
+      type: object
+      properties:
+        id:
+          type: integer
+        type:
+          type: string
+          enum: [channel]
+        original_title:
+          type: string
+        year:
+          type: integer
+          nullable: true
+        duration_in_seconds:
+          type: integer
+          nullable: true
+      required: [id, type, original_title]
+    ChannelProgramSummary:
+      type: object
+      properties:
+        id:
+          type: integer
+        type:
+          type: string
+          enum: [channel_program]
+        original_title:
+          type: string
+        year:
+          type: integer
+          nullable: true
+        duration_in_seconds:
+          type: integer
+          nullable: true
+        watched_seconds:
+          type: integer
+          nullable: true
+          description: Present in favorites or channel program detail responses
+      required: [id, type, original_title]
+    ChannelProgramDetail:
+      allOf:
+        - $ref: '#/components/schemas/ChannelProgramSummary'
+        - type: object
+          properties:
+            schedule:
+              type: array
+              items:
+                $ref: '#/components/schemas/ScheduleEntry'
+            watched_seconds:
+              type: integer
+              description: Watch progress for the requested (or anonymous) user
+          required: [schedule, watched_seconds]
+    ScheduleEntry:
+      type: object
+      properties:
+        start_time:
+          type: string
+          format: date-time
+        end_time:
+          type: string
+          format: date-time
+      required: [start_time, end_time]
+    FavoriteApp:
+      type: object
+      properties:
+        app_id:
+          type: integer
+        app_name:
+          type: string
+        position:
+          type: integer
+      required: [app_id, app_name, position]
+    FavoriteChannelProgram:
+      allOf:
+        - $ref: '#/components/schemas/ChannelProgramSummary'
+        - type: object
+          required: [watched_seconds]
+    AppSearchResult:
+      type: object
+      properties:
+        id:
+          type: integer
+        type:
+          type: string
+          enum: [app]
+        name:
+          type: string
+      required: [id, type, name]
+    SearchResult:
+      oneOf:
+        - $ref: '#/components/schemas/Movie'
+        - $ref: '#/components/schemas/TvShow'
+        - $ref: '#/components/schemas/Season'
+        - $ref: '#/components/schemas/Episode'
+        - $ref: '#/components/schemas/Channel'
+        - $ref: '#/components/schemas/ChannelProgramSummary'
+        - $ref: '#/components/schemas/AppSearchResult'
+    ErrorResponse:
+      type: object
+      properties:
+        error:
+          type: object
+          properties:
+            code:
+              type: string
+            message:
+              type: string
+          required: [code, message]
+      required: [error]
+

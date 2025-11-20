@@ -73,6 +73,10 @@ bin/rails streams:import
 bin/rails server
 ```
 
+### CORS configuration
+
+The API ships with permissive CORS (any origin) so Swagger UI and external clients can call it out of the box. To tighten it up in specific environments, set the `CORS_ORIGINS` environment variable (comma-separated list of origins) before booting Rails.
+
 
 API runs at:
 👉 http://localhost:3000
@@ -184,6 +188,12 @@ Example:
 ```bash
 /api/v1/search?query=star
 ```
+
+## 📖 API Reference (Swagger)
+
+- OpenAPI spec lives at `public/swagger/openapi.yaml`.
+- Interactive docs are served at `http://localhost:3000/docs` once the Rails server is running (served statically via Swagger UI).
+- When deploying behind a different host, update the `servers` block in the YAML file to reflect the external URL if needed.
 
 
 ## 📝 Notes
