@@ -4,14 +4,11 @@ module Api
       def index
         user_id = params[:user_id]
 
-        favorites = FavoriteApp
-                      .includes(:app)
-                      .where(user_id: user_id)
-                      .order(:position)
+        favorites = FavoriteApp.includes(:app)
+                               .where(user_id: user_id)
+                               .order(:position)
 
-        render json: favorites.map { |favorite|
-          serialize_favorite(favorite)
-        }
+        render json: ApplicationSerializer.serialize_collection(favorites, FavoriteAppSerializer)
       end
 
       def create
@@ -25,7 +22,7 @@ module Api
         favorite.position = position
 
         if favorite.save
-          render json: serialize_favorite(favorite)
+          render json: FavoriteAppSerializer.serialize(favorite)
         else
           render json: {
             error: {
@@ -34,16 +31,6 @@ module Api
             }
           }, status: :unprocessable_entity
         end
-      end
-
-      private
-
-      def serialize_favorite(favorite)
-        {
-          app_id: favorite.app_id,
-          app_name: favorite.app.name,
-          position: favorite.position
-        }
       end
     end
   end
