@@ -52,3 +52,7 @@ group :development, :test do
   gem "rspec-rails", "~> 6.1"
   gem "factory_bot_rails"
 end
+
+group :development do
+  gem "annot8", "~> 1.0"
+end
